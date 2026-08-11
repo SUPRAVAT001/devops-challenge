@@ -1,0 +1,44 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Test Python application
+        run: |
+          python3 -m py_compile app/app.py
+
+      - name: Build Docker image
+        run: |
+          docker build -t devops-challenge-api:${GITHUB_SHA} ./app
+
+      - name: Load image into Minikube
+        run: |
+          minikube image load devops-challenge-api:${GITHUB_SHA}
+
+      - name: Update Kubernetes image
+        run: |
+          sed -i "s|image: devops-challenge-api:.*|image: devops-challenge-api:${GITHUB_SHA}|" k8s/backend.yaml
+
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl apply -f k8s/postgres.yaml
+          kubectl apply -f k8s/backend.yaml
+
+      - name: Wait for deployment
+        run: |
+          kubectl rollout status deployment/backend --timeout=120s
+
+      - name: Verify deployment
+        run: |
+          kubectl get pods
+          kubectl get services
