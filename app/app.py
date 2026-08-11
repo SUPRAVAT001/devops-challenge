@@ -19,9 +19,10 @@ def get_db_connection():
 @app.route("/")
 def home():
     return jsonify({
-        "application": "devops-challenge-api",
-        "status": "running"
-    })
+    "application": "devops-challenge-api",
+    "version": "2.0",
+    "status": "running"
+})
 
 
 @app.route("/health")
